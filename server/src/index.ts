@@ -105,6 +105,17 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   next();
 });
 
+// Base API diagnostic endpoint
+app.get('/api', (_req: Request, res: Response) => {
+  res.json({
+    status: 'healthy',
+    app: 'VOLTEDGE Electronics API',
+    version: '4.0.0',
+    hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Health check endpoint
 app.get('/api/health', async (_req: Request, res: Response) => {
   try {
@@ -214,12 +225,10 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   });
 });
 
-// Only call app.listen in non-serverless / local environments
-if (process.env.NODE_ENV !== 'production' || process.env.RUN_LOCAL === 'true') {
-  app.listen(PORT, () => {
-    console.log(`⚡ VOLTEDGE Electronics Backend running at http://localhost:${PORT}`);
-    console.log(`📡 Health Check: http://localhost:${PORT}/api/health`);
-  });
-}
+// Bind HTTP listener on assigned port (local and Vercel microservices)
+app.listen(PORT, () => {
+  console.log(`⚡ VOLTEDGE Electronics Backend running at http://localhost:${PORT}`);
+  console.log(`📡 Health Check: http://localhost:${PORT}/api/health`);
+});
 
 export default app;
