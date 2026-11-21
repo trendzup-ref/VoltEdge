@@ -1,4 +1,4 @@
-// Prisma schema for VOLTEDGE Electronics
+// Prisma schema configured for PostgreSQL
 // Milestone 4: Complete Electronics Showroom, E-Commerce & Service Ecosystem
 
 generator client {
@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
