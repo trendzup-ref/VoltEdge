@@ -3,6 +3,7 @@
   "version": "4.0.0",
   "description": "VOLTEDGE Electronics - Flagship Electronics Showroom, E-Commerce Platform, Admin Dashboard & After-Sales Service Management System",
   "scripts": {
+    "postinstall": "cd server && npm run prisma:generate",
     "install:all": "npm install && cd server && npm install && cd ../client && npm install",
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
