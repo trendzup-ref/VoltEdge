@@ -1,0 +1,191 @@
+import { prisma } from '../prisma.js';
+// Get delivery tracking for an order (Customer & Admin)
+export async function getOrderDeliveryTracking(req, res) {
+    try {
+        const { orderId } = req.params;
+        const delivery = await prisma.deliveryTracking.findUnique({
+            where: { orderId },
+            include: {
+                order: {
+                    select: {
+                        id: true,
+                        orderNumber: true,
+                        customerName: true,
+                        shippingAddress: true,
+                        orderStatus: true,
+                        createdAt: true,
+                    },
+                },
+            },
+        });
+        if (!delivery) {
+            // Check if order exists to return an initial processing tracking status
+            const order = await prisma.order.findUnique({
+                where: { id: orderId },
+                select: {
+                    id: true,
+                    orderNumber: true,
+                    customerName: true,
+                    shippingAddress: true,
+                    orderStatus: true,
+                    createdAt: true,
+                },
+            });
+            if (!order) {
+                return res.status(404).json({ success: false, message: 'Order not found.' });
+            }
+            const initialStatus = order.orderStatus === 'DELIVERED'
+                ? 'Delivered'
+                : order.orderStatus === 'SHIPPED'
+                    ? 'In Transit'
+                    : 'Processing';
+            return res.json({
+                success: true,
+                delivery: {
+                    id: `initial-${order.id}`,
+                    orderId: order.id,
+                    shippingProvider: 'VOLTEDGE Express',
+                    trackingNumber: `VOLT-${order.orderNumber.replace(/[^0-9]/g, '') || Date.now()}`,
+                    trackingUrl: null,
+                    dispatchDate: null,
+                    expectedDeliveryDate: null,
+                    deliveredDate: order.orderStatus === 'DELIVERED' ? new Date().toISOString() : null,
+                    deliveryStatus: initialStatus,
+                    deliveryNotes: 'Order confirmed and registered for white-glove showroom dispatch.',
+                    order,
+                    parsedTimeline: [
+                        {
+                            status: 'Order Confirmed',
+                            notes: 'Order verified in VOLTEDGE showroom inventory.',
+                            location: 'Showroom Central Warehouse',
+                            timestamp: order.createdAt,
+                        },
+                        ...(order.orderStatus === 'SHIPPED' || order.orderStatus === 'DELIVERED' ? [{
+                                status: 'Dispatched',
+                                notes: 'Handed over to VOLTEDGE Express logistics partner.',
+                                location: 'Bangalore Hub',
+                                timestamp: new Date(new Date(order.createdAt).getTime() + 3600000).toISOString(),
+                            }] : []),
+                        ...(order.orderStatus === 'DELIVERED' ? [{
+                                status: 'Delivered',
+                                notes: 'Package safely delivered to customer address.',
+                                location: order.shippingAddress.split(',')[0] || 'Customer Destination',
+                                timestamp: new Date().toISOString(),
+                            }] : []),
+                    ],
+                },
+            });
+        }
+        let parsedTimeline = [];
+        if (delivery.timeline) {
+            try {
+                parsedTimeline = JSON.parse(delivery.timeline);
+            }
+            catch (e) {
+                parsedTimeline = [];
+            }
+        }
+        return res.json({
+            success: true,
+            delivery: {
+                ...delivery,
+                parsedTimeline,
+            },
+        });
+    }
+    catch (error) {
+        console.error('Get delivery tracking error:', error);
+        return res.status(500).json({ success: false, message: 'Failed to fetch delivery details.' });
+    }
+}
+// Update or create delivery tracking info (Admin)
+export async function updateOrderDeliveryTracking(req, res) {
+    try {
+        const { orderId } = req.params;
+        const { shippingProvider, trackingNumber, trackingUrl, dispatchDate, expectedDeliveryDate, deliveredDate, deliveryStatus, deliveryNotes, statusUpdateComment, location, } = req.body;
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found.' });
+        }
+        let existing = await prisma.deliveryTracking.findUnique({ where: { orderId } });
+        let timeline = [];
+        if (existing?.timeline) {
+            try {
+                timeline = JSON.parse(existing.timeline);
+            }
+            catch (e) {
+                timeline = [];
+            }
+        }
+        const currentStatus = deliveryStatus || existing?.deliveryStatus || 'Processing';
+        // Append new timeline entry if status is being updated or comment provided
+        if (statusUpdateComment || deliveryStatus) {
+            timeline.push({
+                status: currentStatus,
+                notes: statusUpdateComment || deliveryNotes || `Status changed to ${currentStatus}`,
+                location: location || 'Bangalore Hub',
+                timestamp: new Date().toISOString(),
+            });
+        }
+        const delivery = await prisma.deliveryTracking.upsert({
+            where: { orderId },
+            create: {
+                orderId,
+                shippingProvider: shippingProvider || 'VOLTEDGE Express',
+                trackingNumber: trackingNumber || `TRK${Date.now()}`,
+                trackingUrl: trackingUrl || null,
+                dispatchDate: dispatchDate ? new Date(dispatchDate) : new Date(),
+                expectedDeliveryDate: expectedDeliveryDate ? new Date(expectedDeliveryDate) : null,
+                deliveredDate: deliveredDate ? new Date(deliveredDate) : null,
+                deliveryStatus: currentStatus,
+                deliveryNotes: deliveryNotes || null,
+                timeline: JSON.stringify(timeline),
+            },
+            update: {
+                shippingProvider: shippingProvider !== undefined ? shippingProvider : existing?.shippingProvider,
+                trackingNumber: trackingNumber !== undefined ? trackingNumber : existing?.trackingNumber,
+                trackingUrl: trackingUrl !== undefined ? trackingUrl : existing?.trackingUrl,
+                dispatchDate: dispatchDate ? new Date(dispatchDate) : existing?.dispatchDate,
+                expectedDeliveryDate: expectedDeliveryDate ? new Date(expectedDeliveryDate) : existing?.expectedDeliveryDate,
+                deliveredDate: deliveredDate ? new Date(deliveredDate) : existing?.deliveredDate,
+                deliveryStatus: currentStatus,
+                deliveryNotes: deliveryNotes !== undefined ? deliveryNotes : existing?.deliveryNotes,
+                timeline: JSON.stringify(timeline),
+            },
+        });
+        // Sync orderStatus if delivered or dispatched
+        if (currentStatus === 'Delivered') {
+            await prisma.order.update({
+                where: { id: orderId },
+                data: { orderStatus: 'DELIVERED' },
+            });
+        }
+        else if (currentStatus === 'Dispatched' || currentStatus === 'In Transit') {
+            await prisma.order.update({
+                where: { id: orderId },
+                data: { orderStatus: 'SHIPPED' },
+            });
+        }
+        // Customer Notification
+        if (order.customerId) {
+            await prisma.notification.create({
+                data: {
+                    customerId: order.customerId,
+                    title: `Delivery Update: ${currentStatus}`,
+                    message: `Order ${order.orderNumber} is currently '${currentStatus}'. ${trackingNumber ? `Tracking #: ${trackingNumber}` : ''}`,
+                    type: 'ORDER_UPDATE',
+                    link: `/account/orders/${order.id}`,
+                },
+            });
+        }
+        return res.json({
+            success: true,
+            message: 'Delivery tracking updated successfully.',
+            delivery,
+        });
+    }
+    catch (error) {
+        console.error('Update delivery tracking error:', error);
+        return res.status(500).json({ success: false, message: 'Failed to update delivery tracking.' });
+    }
+}

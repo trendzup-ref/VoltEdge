@@ -7,6 +7,8 @@ dist/
 build/
 **/dist/
 **/build/
+!server/dist/
+!server/dist/**
 
 # Environment variables & secrets
 .env
