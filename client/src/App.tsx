@@ -69,6 +69,7 @@ export const App: React.FC = () => {
                       <Route path="/compare" element={<ComparePage />} />
                       <Route path="/account" element={<CustomerAccountPage />} />
                       <Route path="/account/orders/:id" element={<OrderDetailPage />} />
+                      <Route path="/orders/:id" element={<OrderDetailPage />} />
                     </Route>
 
                     {/* Customer Auth Pages */}

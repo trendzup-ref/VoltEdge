@@ -16,7 +16,7 @@ export const AnnouncementBar: React.FC = () => {
             <Sparkles className="w-3 h-3" /> Flagship Showroom
           </span>
           <span className="hidden sm:inline-flex items-center gap-1.5 text-slate-300">
-            <Truck className="w-3.5 h-3.5 text-slate-400" /> Free Express Delivery on orders over $150
+            <Truck className="w-3.5 h-3.5 text-slate-400" /> Free Express Delivery on orders over ₹50,000
           </span>
           <span className="hidden md:inline-flex items-center gap-1.5 text-slate-300">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> 100% Genuine Manufacturer Warranty

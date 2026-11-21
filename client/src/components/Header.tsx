@@ -16,6 +16,10 @@ import {
   LogOut,
   MapPin,
   Settings,
+  Award,
+  Wrench,
+  RotateCcw,
+  Bell,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -155,18 +159,46 @@ export const Header: React.FC = () => {
                         <User className="w-3.5 h-3.5 text-cyan-400" /> Account Dashboard
                       </Link>
                       <Link
-                        to="/account"
+                        to="/account?tab=orders"
                         onClick={() => setIsAccountOpen(false)}
                         className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-medium"
                       >
                         <Package className="w-3.5 h-3.5 text-blue-400" /> My Orders & Invoices
                       </Link>
                       <Link
-                        to="/account"
+                        to="/account?tab=warranty"
                         onClick={() => setIsAccountOpen(false)}
                         className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-medium"
                       >
-                        <MapPin className="w-3.5 h-3.5 text-emerald-400" /> Delivery Addresses
+                        <Award className="w-3.5 h-3.5 text-amber-400" /> Warranty Claims & RMA
+                      </Link>
+                      <Link
+                        to="/account?tab=service"
+                        onClick={() => setIsAccountOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-medium"
+                      >
+                        <Wrench className="w-3.5 h-3.5 text-emerald-400" /> Repairs & Service
+                      </Link>
+                      <Link
+                        to="/account?tab=returns"
+                        onClick={() => setIsAccountOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-medium"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5 text-rose-400" /> Returns & Refunds
+                      </Link>
+                      <Link
+                        to="/account?tab=notifications"
+                        onClick={() => setIsAccountOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-medium"
+                      >
+                        <Bell className="w-3.5 h-3.5 text-yellow-400" /> Showroom Notifications
+                      </Link>
+                      <Link
+                        to="/account?tab=addresses"
+                        onClick={() => setIsAccountOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-medium"
+                      >
+                        <MapPin className="w-3.5 h-3.5 text-purple-400" /> Delivery Addresses
                       </Link>
                       <button
                         onClick={() => {
@@ -211,7 +243,7 @@ export const Header: React.FC = () => {
                     <span>Staff Admin Dashboard</span>
                   </Link>
                   <span className="text-[10px] text-slate-500 px-3">
-                    Milestone 2 • Management Console
+                    Showroom & Management Console
                   </span>
                 </div>
               </div>

@@ -22,6 +22,7 @@ import {
   getAdminOrders,
   getAdminOrderById,
   updateOrderStatus,
+  updateOrderDeliveryTracking,
 } from '../../services/adminApi';
 import { Order } from '../../types/admin';
 import { StatusBadge } from '../../components/admin/StatusBadge';
@@ -45,6 +46,16 @@ export const AdminOrdersPage: React.FC = () => {
   const [newStatus, setNewStatus] = useState('');
   const [newPaymentStatus, setNewPaymentStatus] = useState('');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  // Delivery Fulfillment State
+  const [shippingProvider, setShippingProvider] = useState('VOLTEDGE Express');
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [trackingUrl, setTrackingUrl] = useState('');
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('');
+  const [deliveryStatus, setDeliveryStatus] = useState('Processing');
+  const [deliveryLocation, setDeliveryLocation] = useState('Showroom Central Warehouse');
+  const [deliveryCheckpointNote, setDeliveryCheckpointNote] = useState('');
+  const [isUpdatingDelivery, setIsUpdatingDelivery] = useState(false);
 
   const loadOrders = async () => {
     try {
@@ -78,10 +89,45 @@ export const AdminOrdersPage: React.FC = () => {
       setNewStatus(fullOrder.orderStatus);
       setNewPaymentStatus(fullOrder.paymentStatus);
       setStatusComment('');
+      // Set delivery defaults based on order
+      setTrackingNumber(`VOLT-${fullOrder.orderNumber.replace(/[^0-9]/g, '')}`);
+      setDeliveryStatus(
+        fullOrder.orderStatus === 'DELIVERED'
+          ? 'Delivered'
+          : fullOrder.orderStatus === 'SHIPPED'
+          ? 'In Transit'
+          : 'Processing'
+      );
+      setDeliveryCheckpointNote('');
     } catch (err) {
       alert('Failed to load order details');
     } finally {
       setIsLoadingDetail(false);
+    }
+  };
+
+  const handleDeliveryUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedOrder) return;
+
+    try {
+      setIsUpdatingDelivery(true);
+      await updateOrderDeliveryTracking(selectedOrder.id, {
+        shippingProvider,
+        trackingNumber: trackingNumber || undefined,
+        trackingUrl: trackingUrl || undefined,
+        expectedDeliveryDate: expectedDeliveryDate || undefined,
+        deliveryStatus,
+        location: deliveryLocation || 'Bangalore Hub',
+        statusUpdateComment: deliveryCheckpointNote || `Status changed to ${deliveryStatus}`,
+      });
+      alert(`Delivery tracking for Order ${selectedOrder.orderNumber} successfully updated.`);
+      setDeliveryCheckpointNote('');
+      loadOrders();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to update delivery tracking');
+    } finally {
+      setIsUpdatingDelivery(false);
     }
   };
 
@@ -464,6 +510,135 @@ export const AdminOrdersPage: React.FC = () => {
                   >
                     {isUpdatingStatus ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                     <span>Save Order Update</span>
+                  </button>
+                </div>
+              </form>
+
+              {/* Courier Delivery Fulfillment & Checkpoint Updates */}
+              <form onSubmit={handleDeliveryUpdate} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5 uppercase tracking-wider">
+                    <Truck className="w-4 h-4 text-cyan-600" />
+                    Courier Tracking & Live Logistics Dispatch
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-cyan-100 text-cyan-800">
+                    Live Tracking
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Logistics Partner / Courier
+                    </label>
+                    <select
+                      value={shippingProvider}
+                      onChange={(e) => setShippingProvider(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white font-medium outline-none"
+                    >
+                      <option value="VOLTEDGE Express">VOLTEDGE Express (White-Glove)</option>
+                      <option value="Blue Dart Express">Blue Dart Express</option>
+                      <option value="Delhivery Logistics">Delhivery Logistics</option>
+                      <option value="DTDC Air">DTDC Air Cargo</option>
+                      <option value="FedEx India">FedEx India</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      AWB Tracking Number
+                    </label>
+                    <input
+                      type="text"
+                      value={trackingNumber}
+                      onChange={(e) => setTrackingNumber(e.target.value)}
+                      placeholder="e.g. BLUEDART-98124501"
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white font-mono outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Delivery Transit Status
+                    </label>
+                    <select
+                      value={deliveryStatus}
+                      onChange={(e) => setDeliveryStatus(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white font-semibold outline-none"
+                    >
+                      <option value="Processing">Processing (Packaging in Showroom)</option>
+                      <option value="Dispatched">Dispatched (Handed to Courier)</option>
+                      <option value="In Transit">In Transit (Cross-facility movement)</option>
+                      <option value="Out for Delivery">Out for Delivery (Rider assigned)</option>
+                      <option value="Delivered">Delivered (Handed over to customer)</option>
+                      <option value="Failed Delivery">Failed Delivery / Rescheduled</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Current Transit Hub / Location
+                    </label>
+                    <input
+                      type="text"
+                      value={deliveryLocation}
+                      onChange={(e) => setDeliveryLocation(e.target.value)}
+                      placeholder="e.g. Bangalore Sorting Center"
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Courier Web Tracking URL
+                    </label>
+                    <input
+                      type="url"
+                      value={trackingUrl}
+                      onChange={(e) => setTrackingUrl(e.target.value)}
+                      placeholder="https://track.bluedart.com/..."
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Expected Delivery Date
+                    </label>
+                    <input
+                      type="date"
+                      value={expectedDeliveryDate}
+                      onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Checkpoint Transit Note / Update Comment
+                  </label>
+                  <input
+                    type="text"
+                    value={deliveryCheckpointNote}
+                    onChange={(e) => setDeliveryCheckpointNote(e.target.value)}
+                    placeholder="e.g. Package arrived at regional air sorting hub."
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white outline-none"
+                  />
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    disabled={isUpdatingDelivery}
+                    className="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    {isUpdatingDelivery ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Truck className="w-3.5 h-3.5" />}
+                    <span>Update Live Tracking</span>
                   </button>
                 </div>
               </form>

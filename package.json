@@ -1,24 +1,26 @@
 {
-  "name": "voltedge-electronics-milestone-2",
-  "version": "2.0.0",
-  "description": "VOLTEDGE Electronics - Milestone 2: Admin Dashboard & Showroom Management System",
+  "name": "voltedge-electronics",
+  "version": "4.0.0",
+  "description": "VOLTEDGE Electronics - Flagship Electronics Showroom, E-Commerce Platform, Admin Dashboard & After-Sales Service Management System",
   "scripts": {
     "install:all": "npm install && cd server && npm install && cd ../client && npm install",
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "build": "cd client && npm run build && cd ../server && npm run build",
-    "test": "cd server && node test-m2-api.js",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "test": "cd server && node test-m4-api.js",
+    "test:all": "cd server && npm run test:all",
     "test:m1": "cd server && node test-api.js",
-    "seed": "cd server && npm run prisma:seed && npx tsx prisma/seed-m2.ts",
-    "seed:m2": "cd server && npx tsx prisma/seed-m2.ts"
+    "test:m2": "cd server && node test-m2-api.js",
+    "test:m3": "cd server && node test-m3-api.js",
+    "test:m4": "cd server && node test-m4-api.js",
+    "seed": "cd server && npm run prisma:seed",
+    "seed:m2": "cd server && npx tsx prisma/seed-m2.ts",
+    "seed:prod": "cd server && npx tsx prisma/seed-production.ts"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
-  },
-  "dependencies": {
-    "@types/nodemailer": "^8.0.2",
-    "nodemailer": "^10.5.0",
-    "razorpay": "^2.9.8"
   }
 }

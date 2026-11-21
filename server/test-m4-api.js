@@ -18,7 +18,9 @@
  * 15. Business Analytics & CSV Report Generation
  */
 
-import { prisma } from './dist/prisma.js';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 async function runMilestone4Tests() {
   console.log('\n======================================================');

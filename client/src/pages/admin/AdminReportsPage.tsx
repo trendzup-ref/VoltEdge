@@ -18,7 +18,7 @@ import {
   Wrench,
   RotateCcw,
 } from 'lucide-react';
-import { getReportsSummary, getReportData } from '../../services/adminApi';
+import { getReportsSummary, getReportData, adminClient } from '../../services/adminApi';
 
 type ReportType =
   | 'products'
@@ -75,8 +75,9 @@ export const AdminReportsPage: React.FC = () => {
     try {
       setIsExporting(true);
       const token = localStorage.getItem('voltedge_admin_token');
+      const baseUrl = adminClient.defaults.baseURL || '/api/admin';
 
-      let endpoint = `/api/admin/reports/${activeReport === 'low-stock' ? 'inventory?type=low&' : activeReport === 'out-of-stock' ? 'inventory?type=out&' : `${activeReport}?`}format=csv&range=${dateRange}`;
+      let endpoint = `${baseUrl}/reports/${activeReport === 'low-stock' ? 'inventory?type=low&' : activeReport === 'out-of-stock' ? 'inventory?type=out&' : `${activeReport}?`}format=csv&range=${dateRange}`;
       if (startDate) endpoint += `&start=${startDate}`;
       if (endDate) endpoint += `&end=${endDate}`;
 

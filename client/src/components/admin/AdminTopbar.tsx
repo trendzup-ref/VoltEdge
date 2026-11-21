@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   Menu,
@@ -11,8 +11,14 @@ import {
   AlertTriangle,
   ExternalLink,
   Settings,
+  CheckCircle,
+  Package,
+  Wrench,
+  Award,
+  RotateCcw,
 } from 'lucide-react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
+import { getAdminNotifications, markAdminNotificationRead } from '../../services/adminApi';
 
 interface AdminTopbarProps {
   onMobileMenuToggle: () => void;
@@ -26,6 +32,44 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({ onMobileMenuToggle }) 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await getAdminNotifications();
+      if (res && res.notifications) {
+        setNotifications(res.notifications);
+        setUnreadCount(res.unreadCount || res.notifications.filter((n: any) => !n.isRead).length);
+      }
+    } catch (err) {
+      // Non-blocking notification fetch fallback
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000); // Poll every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleNotificationClick = async (notification: any) => {
+    try {
+      if (!notification.isRead) {
+        await markAdminNotificationRead(notification.id);
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
+      setIsNotificationOpen(false);
+      if (notification.link) {
+        navigate(notification.link);
+      }
+    } catch (err) {
+      console.error('Failed to mark notification read:', err);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -49,7 +93,10 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({ onMobileMenuToggle }) 
     if (path.startsWith('/admin/brands')) return 'Brand Management';
     if (path.startsWith('/admin/inventory/movements')) return 'Stock Movement Ledger';
     if (path.startsWith('/admin/inventory')) return 'Inventory & Stock Control';
-    if (path.startsWith('/admin/orders')) return 'Order Management Foundation';
+    if (path.startsWith('/admin/orders')) return 'Order Management & Fulfillment';
+    if (path.startsWith('/admin/returns')) return 'Customer Returns & Refunds';
+    if (path.startsWith('/admin/warranty')) return 'Warranty Claims & RMA Management';
+    if (path.startsWith('/admin/service')) return 'Electronics Repairs & Service Requests';
     if (path.startsWith('/admin/customers')) return 'Customer Directory';
     if (path.startsWith('/admin/coupons')) return 'Coupons & Promotions';
     if (path.startsWith('/admin/staff')) return 'Staff & Access Control';
@@ -120,42 +167,103 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({ onMobileMenuToggle }) 
             title="Notifications"
           >
             <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-blue ring-2 ring-white animate-pulse" />
+            {unreadCount > 0 ? (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center ring-2 ring-white">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            ) : (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+            )}
           </button>
 
           {isNotificationOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 py-3 z-50">
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-200 py-3 z-50">
               <div className="px-4 pb-2 border-b border-slate-100 flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-900">Showroom Alerts</span>
-                <span className="text-[10px] text-brand-blue font-semibold">Realtime</span>
-              </div>
-              <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
-                <div className="p-3 hover:bg-slate-50 transition-colors flex gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                    <AlertTriangle className="w-4 h-4" />
-                  </div>
-                  <div className="text-xs">
-                    <p className="font-semibold text-slate-800">Inventory Notice</p>
-                    <p className="text-slate-500 text-[11px] mt-0.5">Dell XPS 16 stock level is currently at 4 units.</p>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-900">Showroom Alerts</span>
+                  {unreadCount > 0 && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-700 font-bold">
+                      {unreadCount} unread
+                    </span>
+                  )}
                 </div>
-                <div className="p-3 hover:bg-slate-50 transition-colors flex gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-brand-blue flex items-center justify-center shrink-0">
-                    <Shield className="w-4 h-4" />
-                  </div>
-                  <div className="text-xs">
-                    <p className="font-semibold text-slate-800">Security Audit</p>
-                    <p className="text-slate-500 text-[11px] mt-0.5">Role-based permission check active and verified.</p>
-                  </div>
-                </div>
+                <span className="text-[10px] text-brand-blue font-semibold">Live Feed</span>
               </div>
-              <div className="px-4 pt-2 border-t border-slate-100 text-center">
+
+              <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-slate-400">
+                    No new alerts logged. Everything in the showroom is running smoothly!
+                  </div>
+                ) : (
+                  notifications.map((n) => {
+                    const isUnread = !n.isRead;
+                    return (
+                      <div
+                        key={n.id}
+                        onClick={() => handleNotificationClick(n)}
+                        className={`p-3 transition-colors flex gap-3 cursor-pointer ${
+                          isUnread ? 'bg-blue-50/50 hover:bg-blue-50' : 'hover:bg-slate-50'
+                        }`}
+                      >
+                        <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                            n.type === 'LOW_STOCK'
+                              ? 'bg-amber-50 text-amber-600'
+                              : n.type === 'WARRANTY'
+                              ? 'bg-indigo-50 text-indigo-600'
+                              : n.type === 'RETURN'
+                              ? 'bg-rose-50 text-rose-600'
+                              : 'bg-blue-50 text-brand-blue'
+                          }`}
+                        >
+                          {n.type === 'LOW_STOCK' ? (
+                            <AlertTriangle className="w-4 h-4" />
+                          ) : n.type === 'WARRANTY' ? (
+                            <Award className="w-4 h-4" />
+                          ) : n.type === 'RETURN' ? (
+                            <RotateCcw className="w-4 h-4" />
+                          ) : (
+                            <Shield className="w-4 h-4" />
+                          )}
+                        </div>
+                        <div className="text-xs flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <p className={`font-semibold truncate ${isUnread ? 'text-brand-navy' : 'text-slate-800'}`}>
+                              {n.title}
+                            </p>
+                            {isUnread && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-brand-blue shrink-0" />
+                            )}
+                          </div>
+                          <p className="text-slate-500 text-[11px] mt-0.5 line-clamp-2">{n.message}</p>
+                          <span className="text-[9px] text-slate-400 mt-1 block">
+                            {new Date(n.createdAt).toLocaleString('en-IN', {
+                              dateStyle: 'short',
+                              timeStyle: 'short',
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className="px-4 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
                 <Link
                   to="/admin/inventory"
                   onClick={() => setIsNotificationOpen(false)}
-                  className="text-xs text-brand-blue font-semibold hover:underline"
+                  className="text-brand-blue font-semibold hover:underline text-[11px]"
                 >
-                  View Inventory Health
+                  Inventory Health
+                </Link>
+                <Link
+                  to="/admin/orders"
+                  onClick={() => setIsNotificationOpen(false)}
+                  className="text-slate-600 font-semibold hover:underline text-[11px]"
+                >
+                  Orders Queue
                 </Link>
               </div>
             </div>

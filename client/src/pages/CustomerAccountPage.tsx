@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useToast } from '../context/ToastContext';
@@ -49,19 +49,41 @@ export const CustomerAccountPage: React.FC = () => {
   const { wishlist, moveToCart } = useWishlist();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState<
-    | 'overview'
-    | 'orders'
-    | 'warranty'
-    | 'service'
-    | 'returns'
-    | 'notifications'
-    | 'addresses'
-    | 'wishlist'
-    | 'profile'
-    | 'settings'
-  >('overview');
+  const validTabs = [
+    'overview',
+    'orders',
+    'warranty',
+    'service',
+    'returns',
+    'notifications',
+    'addresses',
+    'wishlist',
+    'profile',
+    'settings',
+  ] as const;
+
+  type TabType = typeof validTabs[number];
+
+  const urlTab = searchParams.get('tab');
+  const initialTab: TabType = (urlTab && (validTabs as readonly string[]).includes(urlTab))
+    ? (urlTab as TabType)
+    : 'overview';
+
+  const [activeTab, setActiveTabState] = useState<TabType>(initialTab);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && (validTabs as readonly string[]).includes(tabParam)) {
+      setActiveTabState(tabParam as TabType);
+    }
+  }, [searchParams]);
+
+  const setActiveTab = (tab: TabType) => {
+    setActiveTabState(tab);
+    setSearchParams({ tab });
+  };
 
   // Milestone 4: Customer States
   const [warrantyClaims, setWarrantyClaims] = useState<any[]>([]);

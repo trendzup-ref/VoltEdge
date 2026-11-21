@@ -112,8 +112,8 @@ app.get('/api/health', async (_req: Request, res: Response) => {
     res.json({
       status: 'healthy',
       app: 'VOLTEDGE Electronics API',
-      version: '2.0.0',
-      milestone: 'Milestone 2 - Admin Dashboard & Showroom Management',
+      version: '4.0.0',
+      milestone: 'Milestone 4 - Complete Electronics Showroom, E-Commerce & Service Ecosystem',
       timestamp: new Date().toISOString(),
       database: 'connected',
     });

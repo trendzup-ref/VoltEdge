@@ -1,12 +1,12 @@
 {
-  "name": "client",
+  "name": "voltedge-client",
   "private": true,
-  "version": "1.0.0",
+  "version": "4.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "oxlint",
+    "lint": "tsc --noEmit",
     "preview": "vite preview"
   },
   "dependencies": {

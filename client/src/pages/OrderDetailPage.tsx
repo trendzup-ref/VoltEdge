@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getCustomerOrderDetail, getCustomerOrderInvoice } from '../services/customerApi';
+import { getCustomerOrderDetail, getCustomerOrderInvoice, getOrderDeliveryTracking } from '../services/customerApi';
 import { CustomerOrder, InvoiceData } from '../types/customer';
 import {
   ArrowLeft,
@@ -13,6 +13,9 @@ import {
   Clock,
   ShieldCheck,
   AlertCircle,
+  ExternalLink,
+  Copy,
+  Navigation,
 } from 'lucide-react';
 
 export const OrderDetailPage: React.FC = () => {
@@ -22,6 +25,8 @@ export const OrderDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showInvoiceView, setShowInvoiceView] = useState(false);
+  const [delivery, setDelivery] = useState<any | null>(null);
+  const [copiedTracking, setCopiedTracking] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -35,8 +40,19 @@ export const OrderDetailPage: React.FC = () => {
       const data = await getCustomerOrderDetail(orderId);
       setOrder(data);
       // Pre-load invoice
-      const inv = await getCustomerOrderInvoice(orderId);
-      setInvoice(inv);
+      try {
+        const inv = await getCustomerOrderInvoice(orderId);
+        setInvoice(inv);
+      } catch (invErr) {
+        // Non-blocking invoice load
+      }
+      // Load delivery tracking
+      try {
+        const deliv = await getOrderDeliveryTracking(orderId);
+        setDelivery(deliv);
+      } catch (delivErr) {
+        // Non-blocking delivery load
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load order details');
     } finally {
@@ -265,6 +281,112 @@ export const OrderDetailPage: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Live Delivery Tracking & Timeline Card */}
+        {delivery && (
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 mb-6 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
+                  <Truck className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-bold text-white">Live Courier Tracking</h2>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                      {delivery.shippingProvider || 'VOLTEDGE Express'}
+                    </span>
+                  </div>
+                  {delivery.trackingNumber && (
+                    <div className="text-xs text-slate-400 flex flex-wrap items-center gap-2 mt-0.5">
+                      <span>AWB: <strong className="text-slate-200 font-mono">{delivery.trackingNumber}</strong></span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(delivery.trackingNumber);
+                          setCopiedTracking(true);
+                          setTimeout(() => setCopiedTracking(false), 2000);
+                        }}
+                        className="text-slate-400 hover:text-white transition-colors"
+                        title="Copy tracking number"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
+                      {copiedTracking && <span className="text-[10px] text-emerald-400 font-semibold">Copied!</span>}
+                      {delivery.trackingUrl && (
+                        <a
+                          href={delivery.trackingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-cyan-400 hover:underline flex items-center gap-0.5 text-xs font-semibold ml-2"
+                        >
+                          Courier Portal <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="sm:text-right">
+                <div className="text-xs text-slate-400">Delivery Status</div>
+                <div className="text-sm font-bold text-cyan-400">{delivery.deliveryStatus}</div>
+                {delivery.expectedDeliveryDate && (
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    Est: {new Date(delivery.expectedDeliveryDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Tracking Checkpoint Steps */}
+            {delivery.parsedTimeline && delivery.parsedTimeline.length > 0 ? (
+              <div className="pt-5">
+                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                  <Navigation className="w-3.5 h-3.5 text-cyan-400" /> Transit Checkpoints & Dispatch History
+                </h3>
+                <div className="relative border-l-2 border-slate-800 ml-3.5 space-y-4 pb-1">
+                  {delivery.parsedTimeline.map((step: any, idx: number) => {
+                    const isLatest = idx === delivery.parsedTimeline.length - 1;
+                    return (
+                      <div key={idx} className="relative pl-6 text-xs">
+                        <div
+                          className={`w-3 h-3 rounded-full absolute -left-[7px] top-1 ring-4 ${
+                            isLatest
+                              ? 'bg-cyan-400 ring-cyan-400/20 animate-pulse'
+                              : 'bg-slate-600 ring-slate-900'
+                          }`}
+                        />
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                          <span className={`font-bold ${isLatest ? 'text-white' : 'text-slate-300'}`}>
+                            {step.status}
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            {new Date(step.timestamp).toLocaleString('en-IN', {
+                              dateStyle: 'medium',
+                              timeStyle: 'short',
+                            })}
+                          </span>
+                        </div>
+                        {step.notes && <p className="text-slate-400 text-xs mt-0.5">{step.notes}</p>}
+                        {step.location && (
+                          <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                            <MapPin className="w-3 h-3 text-slate-400" />
+                            <span>{step.location}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="pt-4 text-xs text-slate-400">
+                Package registered for dispatch. Real-time courier checkpoints will update as shipment progresses.
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Order Details & Summary Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

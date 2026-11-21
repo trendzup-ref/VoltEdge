@@ -168,3 +168,24 @@ export interface ProductReview {
   };
 }
 
+export interface DeliveryTimelineStep {
+  status: string;
+  notes: string;
+  location?: string;
+  timestamp: string;
+}
+
+export interface DeliveryTracking {
+  id: string;
+  orderId: string;
+  shippingProvider: string;
+  trackingNumber: string;
+  trackingUrl?: string | null;
+  dispatchDate?: string | null;
+  expectedDeliveryDate?: string | null;
+  deliveredDate?: string | null;
+  deliveryStatus: string;
+  deliveryNotes?: string | null;
+  parsedTimeline: DeliveryTimelineStep[];
+}
+

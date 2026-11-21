@@ -1,8 +1,7 @@
-
 {
   "name": "voltedge-server",
-  "version": "1.0.0",
-  "description": "VOLTEDGE Electronics REST API Backend",
+  "version": "4.0.0",
+  "description": "VOLTEDGE Electronics REST API Backend - Milestone 4 Complete",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
@@ -15,8 +14,12 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:seed:m2": "tsx prisma/seed-m2.ts",
     "prisma:seed:prod": "tsx prisma/seed-production.ts",
-    "test": "node test-m2-api.js",
-    "test:m1": "node test-api.js"
+    "test": "node test-m4-api.js",
+    "test:all": "node test-api.js && node test-m2-api.js && node test-m3-api.js && node test-m4-api.js",
+    "test:m1": "node test-api.js",
+    "test:m2": "node test-m2-api.js",
+    "test:m3": "node test-m3-api.js",
+    "test:m4": "node test-m4-api.js"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

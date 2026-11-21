@@ -30,32 +30,32 @@ async function main() {
   // 2. Admin Users & Staff
   const adminUsers = [
     {
-      email: 'admin@voltedge.com',
-      password: 'AdminPassword@123',
+      email: process.env.ADMIN_EMAIL || 'admin@voltedge.com',
+      password: process.env.ADMIN_PASSWORD || 'AdminPassword@123',
       fullName: 'Vikram Malhotra',
       phone: '+91 98765 00001',
       role: 'SUPER_ADMIN',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
     },
     {
-      email: 'manager@voltedge.com',
-      password: 'ManagerPassword@123',
+      email: process.env.MANAGER_EMAIL || 'manager@voltedge.com',
+      password: process.env.MANAGER_PASSWORD || 'ManagerPassword@123',
       fullName: 'Priya Sharma',
       phone: '+91 98765 00002',
       role: 'ADMIN',
       avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80',
     },
     {
-      email: 'inventory@voltedge.com',
-      password: 'InventoryPassword@123',
+      email: process.env.INVENTORY_MANAGER_EMAIL || 'inventory@voltedge.com',
+      password: process.env.INVENTORY_MANAGER_PASSWORD || 'InventoryPassword@123',
       fullName: 'Rahul Verma',
       phone: '+91 98765 00003',
       role: 'INVENTORY_MANAGER',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
     },
     {
-      email: 'sales@voltedge.com',
-      password: 'SalesPassword@123',
+      email: process.env.SALES_STAFF_EMAIL || 'sales@voltedge.com',
+      password: process.env.SALES_STAFF_PASSWORD || 'SalesPassword@123',
       fullName: 'Ananya Patel',
       phone: '+91 98765 00004',
       role: 'SALES_STAFF',
@@ -127,11 +127,32 @@ async function main() {
   }
 
   // 5. Seed Customers & Addresses
+  const customerPassword = process.env.CUSTOMER_PASSWORD || 'CustomerPassword@123';
+  const customerPasswordHash = bcrypt.hashSync(customerPassword, bcrypt.genSaltSync(10));
+
   const customersData = [
+    {
+      firstName: 'Demo',
+      lastName: 'Customer',
+      email: process.env.CUSTOMER_EMAIL || 'customer@voltedge.com',
+      passwordHash: customerPasswordHash,
+      phone: '+91 98000 11223',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+      totalOrders: 3,
+      totalSpent: 185000.0,
+      notes: 'Demo customer account with full portal access.',
+      address: {
+        addressLine1: '100 Innovation Boulevard, Tech Zone',
+        city: 'Bangalore',
+        state: 'Karnataka',
+        postalCode: '560001',
+      },
+    },
     {
       firstName: 'Arjun',
       lastName: 'Mehta',
       email: 'arjun.mehta@gmail.com',
+      passwordHash: customerPasswordHash,
       phone: '+91 98111 22334',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
       totalOrders: 2,
@@ -148,6 +169,7 @@ async function main() {
       firstName: 'Sneha',
       lastName: 'Rao',
       email: 'sneha.rao@outlook.com',
+      passwordHash: customerPasswordHash,
       phone: '+91 98222 33445',
       avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
       totalOrders: 1,
@@ -164,6 +186,7 @@ async function main() {
       firstName: 'Karan',
       lastName: 'Deshmukh',
       email: 'karan.deshmukh@gmail.com',
+      passwordHash: customerPasswordHash,
       phone: '+91 98333 44556',
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&q=80',
       totalOrders: 1,
@@ -187,6 +210,7 @@ async function main() {
           firstName: c.firstName,
           lastName: c.lastName,
           email: c.email,
+          passwordHash: c.passwordHash,
           phone: c.phone,
           avatar: c.avatar,
           totalOrders: c.totalOrders,
@@ -206,6 +230,11 @@ async function main() {
         },
       });
       console.log(`✅ Seeded customer: ${c.firstName} ${c.lastName}`);
+    } else {
+      customer = await prisma.customer.update({
+        where: { id: customer.id },
+        data: { passwordHash: c.passwordHash },
+      });
     }
     createdCustomers.push(customer);
   }

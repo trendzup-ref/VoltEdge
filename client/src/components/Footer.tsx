@@ -188,38 +188,38 @@ export const Footer: React.FC = () => {
           {/* Customer Service & Policies */}
           <div>
             <h5 className="text-sm font-bold text-white tracking-wide uppercase mb-4">
-              Customer Support
+              Customer Support & Services
             </h5>
             <ul className="space-y-2.5 text-xs sm:text-sm text-slate-400">
               <li>
-                <span className="hover:text-white cursor-pointer transition-colors">
-                  Manufacturer Warranty Registration
-                </span>
+                <Link to="/account?tab=warranty" className="hover:text-white transition-colors">
+                  Warranty Claims & RMA
+                </Link>
               </li>
               <li>
-                <span className="hover:text-white cursor-pointer transition-colors">
-                  Order Tracking (Milestone 2)
-                </span>
+                <Link to="/account?tab=orders" className="hover:text-white transition-colors">
+                  Order & Live Delivery Tracking
+                </Link>
               </li>
               <li>
-                <span className="hover:text-white cursor-pointer transition-colors">
-                  Showroom Walk-in Appointments
-                </span>
+                <Link to="/account?tab=service" className="hover:text-white transition-colors">
+                  Electronics Repair & Service
+                </Link>
               </li>
               <li>
-                <span className="hover:text-white cursor-pointer transition-colors">
-                  White-Glove Setup Service
-                </span>
+                <Link to="/account?tab=returns" className="hover:text-white transition-colors">
+                  Returns & Refunds Portal
+                </Link>
               </li>
               <li>
-                <span className="hover:text-white cursor-pointer transition-colors">
-                  Corporate & Volume Procurement
-                </span>
+                <Link to="/compare" className="hover:text-white transition-colors">
+                  Product Comparison Matrix
+                </Link>
               </li>
               <li>
-                <span className="hover:text-white cursor-pointer transition-colors">
-                  Privacy Policy & Terms
-                </span>
+                <Link to="/shop" className="hover:text-white transition-colors">
+                  Verified Genuine Tech Catalog
+                </Link>
               </li>
             </ul>
           </div>
@@ -228,7 +228,7 @@ export const Footer: React.FC = () => {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <div>
-            © {new Date().getFullYear()} VOLTEDGE Electronics Inc. All rights reserved. Milestone 1: Website Design & Technical Foundation.
+            © {new Date().getFullYear()} VOLTEDGE Electronics Inc. All rights reserved. Powering Your Digital World.
           </div>
           <div className="flex items-center gap-4">
             <span className="hover:text-slate-400 cursor-pointer">Privacy</span>

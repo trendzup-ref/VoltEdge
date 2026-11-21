@@ -80,7 +80,7 @@ export const CartDrawer: React.FC = () => {
               <>
                 {/* Free shipping progress bar */}
                 <div className="bg-slate-50 border border-slate-200/80 p-3 rounded-2xl text-xs">
-                  {subtotal >= 150 ? (
+                  {subtotal >= 50000 ? (
                     <div className="flex items-center gap-2 text-emerald-700 font-semibold">
                       <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
                       <span>Congratulations! You qualified for Free Express Delivery!</span>
@@ -88,13 +88,13 @@ export const CartDrawer: React.FC = () => {
                   ) : (
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-slate-600">
-                        <span>Add <strong>{formatPrice(150 - subtotal)}</strong> more for Free Delivery</span>
-                        <span className="font-bold">{Math.round((subtotal / 150) * 100)}%</span>
+                        <span>Add <strong>{formatPrice(50000 - subtotal)}</strong> more for Free Delivery</span>
+                        <span className="font-bold">{Math.round((subtotal / 50000) * 100)}%</span>
                       </div>
                       <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
                         <div
                           className="bg-brand-blue h-1.5 rounded-full transition-all duration-300"
-                          style={{ width: `${Math.min(100, (subtotal / 150) * 100)}%` }}
+                          style={{ width: `${Math.min(100, (subtotal / 50000) * 100)}%` }}
                         />
                       </div>
                     </div>
