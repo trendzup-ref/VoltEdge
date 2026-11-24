@@ -265,9 +265,9 @@ export const Header: React.FC = () => {
             )}
           </button>
 
-          {/* Shopping Cart Icon (Links to /cart or drawer) */}
-          <Link
-            to="/cart"
+          {/* Shopping Cart Icon (Opens interactive drawer) */}
+          <button
+            onClick={() => setIsCartOpen(true)}
             className="flex items-center gap-2 p-2 sm:px-3 sm:py-2 rounded-xl bg-brand-blue/15 hover:bg-brand-blue/25 border border-brand-blue/30 text-white transition-all relative group"
             title="Shopping Cart"
             aria-label="Shopping Cart"
@@ -283,7 +283,7 @@ export const Header: React.FC = () => {
             <span className="hidden sm:inline text-xs font-semibold text-slate-200">
               Cart
             </span>
-          </Link>
+          </button>
 
           {/* Mobile menu button */}
           <button

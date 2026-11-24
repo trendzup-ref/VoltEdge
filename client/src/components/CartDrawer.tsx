@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { X, ShoppingBag, Trash2, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { X, ShoppingBag, Trash2, ArrowRight, ShieldCheck, Sparkles, ShoppingCart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 export const CartDrawer: React.FC = () => {
@@ -17,14 +17,11 @@ export const CartDrawer: React.FC = () => {
 
   if (!isCartOpen) return null;
 
-  const shipping = subtotal > 150 || subtotal === 0 ? 0 : 15.0;
+  const shipping = subtotal >= 50000 || subtotal === 0 ? 0 : 499;
   const grandTotal = subtotal + shipping;
 
   const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
+    return `₹${amount.toLocaleString('en-IN')}`;
   };
 
   return (
@@ -51,6 +48,7 @@ export const CartDrawer: React.FC = () => {
             <button
               onClick={() => setIsCartOpen(false)}
               className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+              aria-label="Close cart drawer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -106,11 +104,14 @@ export const CartDrawer: React.FC = () => {
                   {cart.map((item) => (
                     <div key={item.product.id} className="pt-3 flex gap-3 group">
                       {/* Product Thumbnail */}
-                      <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-xl bg-slate-50 p-2 border border-slate-200/80 shrink-0 flex items-center justify-center">
+                      <div className="w-20 h-20 rounded-xl bg-slate-50 p-2 border border-slate-200/80 shrink-0 flex items-center justify-center overflow-hidden">
                         <img
                           src={item.product.primaryImage}
                           alt={item.product.name}
                           className="w-full h-full object-contain"
+                          onError={(e: any) => {
+                            e.target.src = 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=300&q=80';
+                          }}
                         />
                       </div>
 
@@ -119,7 +120,7 @@ export const CartDrawer: React.FC = () => {
                         <div>
                           <div className="flex items-start justify-between gap-2">
                             <span className="text-[10px] font-bold text-brand-blue uppercase">
-                              {item.product.brand?.name}
+                              {item.product.brand?.name || 'VoltEdge'}
                             </span>
                             <button
                               onClick={() => removeFromCart(item.product.id)}
@@ -129,29 +130,35 @@ export const CartDrawer: React.FC = () => {
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
-                          <h5 className="text-xs font-semibold text-brand-navy line-clamp-1">
+                          <Link
+                            to={`/product/${item.product.slug}`}
+                            onClick={() => setIsCartOpen(false)}
+                            className="text-xs font-semibold text-brand-navy hover:text-brand-blue line-clamp-1"
+                          >
                             {item.product.name}
-                          </h5>
+                          </Link>
                           <span className="text-xs font-bold text-slate-800">
                             {formatPrice(item.product.sellingPrice)}
                           </span>
                         </div>
 
                         {/* Quantity Counter */}
-                        <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center justify-between pt-1">
                           <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
                             <button
                               onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                               className="px-2 py-0.5 text-xs text-slate-600 hover:bg-slate-200"
+                              title="Decrease quantity"
                             >
                               -
                             </button>
-                            <span className="px-2 py-0.5 text-xs font-bold text-slate-800">
+                            <span className="px-2.5 py-0.5 text-xs font-bold text-slate-800">
                               {item.quantity}
                             </span>
                             <button
                               onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
                               className="px-2 py-0.5 text-xs text-slate-600 hover:bg-slate-200"
+                              title="Increase quantity"
                             >
                               +
                             </button>
@@ -188,28 +195,38 @@ export const CartDrawer: React.FC = () => {
                 <div className="flex justify-between text-slate-600">
                   <span>Estimated Express Delivery</span>
                   <span className="font-semibold text-slate-800">
-                    {shipping === 0 ? <span className="text-emerald-600">FREE</span> : formatPrice(shipping)}
+                    {shipping === 0 ? <span className="text-emerald-600 font-bold">FREE</span> : formatPrice(shipping)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm font-bold text-brand-navy pt-2 border-t border-slate-200">
-                  <span>Total</span>
-                  <span>{formatPrice(grandTotal)}</span>
+                  <span>Total Amount</span>
+                  <span className="text-brand-blue font-black text-base">{formatPrice(grandTotal)}</span>
                 </div>
               </div>
 
-              {/* Checkout Preview Button */}
-              <button
-                onClick={() => {
-                  alert('Milestone 1 Preview: Cart functionality is live and interactive! Complete checkout & payment gateway will be implemented in Milestone 3.');
-                }}
-                className="w-full bg-brand-blue hover:bg-brand-blueHover text-white py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95"
-              >
-                <span>Proceed to Checkout</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              {/* Checkout Action Buttons */}
+              <div className="space-y-2 pt-1">
+                <Link
+                  to="/checkout"
+                  onClick={() => setIsCartOpen(false)}
+                  className="w-full bg-brand-blue hover:bg-brand-blueHover text-white py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99]"
+                >
+                  <span>Proceed to Checkout</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
 
-              <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                <Link
+                  to="/cart"
+                  onClick={() => setIsCartOpen(false)}
+                  className="w-full border border-slate-300 hover:bg-white text-slate-700 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+                >
+                  <ShoppingCart className="w-3.5 h-3.5" />
+                  <span>View Full Cart Page</span>
+                </Link>
+              </div>
+
+              <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500 pt-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 <span>30-Day Showroom Guarantee & Insured Delivery</span>
               </div>
             </div>
@@ -219,4 +236,3 @@ export const CartDrawer: React.FC = () => {
     </div>
   );
 };
-
