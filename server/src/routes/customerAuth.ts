@@ -73,15 +73,15 @@ router.post('/register', async (req: Request, res: Response) => {
       data: { customerId: customer.id },
     });
 
-    // Send Welcome Email
+    // Send Welcome Email asynchronously (non-blocking)
     const fullName = `${customer.firstName} ${customer.lastName}`.trim();
     const welcome = emailTemplates.welcome(fullName);
-    await sendEmailNotification({
+    sendEmailNotification({
       to: customer.email,
       subject: welcome.subject,
       html: welcome.html,
       text: `Welcome to VOLTEDGE Electronics, ${fullName}! Your account is now active.`,
-    });
+    }).catch((err: any) => console.warn('[Email Warning] Welcome email send skipped:', err?.message));
 
     // Issue Token
     const token = generateCustomerToken({

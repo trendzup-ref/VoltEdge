@@ -1,6 +1,7 @@
 {
   "name": "voltedge-electronics",
   "version": "4.0.0",
+  "type": "module",
   "description": "VOLTEDGE Electronics - Flagship Electronics Showroom, E-Commerce Platform, Admin Dashboard & After-Sales Service Management System",
   "scripts": {
     "postinstall": "cd server && npm run prisma:generate",

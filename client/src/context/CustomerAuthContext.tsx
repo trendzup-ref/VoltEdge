@@ -31,12 +31,23 @@ export const CustomerAuthProvider: React.FC<{ children: ReactNode }> = ({ childr
       return;
     }
 
+    // Check cached profile first for instant UI response
+    const cached = localStorage.getItem('volt_customer_profile');
+    if (cached) {
+      try {
+        setCustomer(JSON.parse(cached));
+      } catch {}
+    }
+
     try {
       const data = await getCustomerProfile();
       setCustomer(data);
     } catch {
-      localStorage.removeItem('volt_customer_token');
-      setCustomer(null);
+      // If profile fetch fails, keep cached customer if available
+      if (!cached) {
+        localStorage.removeItem('volt_customer_token');
+        setCustomer(null);
+      }
     } finally {
       setIsLoading(false);
     }

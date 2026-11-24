@@ -10,6 +10,9 @@ const getTransporter = () => {
             port,
             secure: port === 465,
             auth: { user, pass },
+            connectionTimeout: 2500,
+            socketTimeout: 2500,
+            greetingTimeout: 2500,
         });
     }
     return null;
